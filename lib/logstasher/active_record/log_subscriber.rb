@@ -8,6 +8,9 @@ module LogStasher
       include CustomFields::LogSubscriber
 
       def identity(event)
+
+        return unless logger.debug?
+
         lsevent = logstash_event(event)
         if logger && lsevent
           logger << lsevent.to_json + "\n"
@@ -24,7 +27,7 @@ module LogStasher
       def logstash_event(event)
         data = event.payload
 
-        return if 'SCHEMA' == data[:name]
+        return if ActiveRecord::LogSubscriber::IGNORE_PAYLOAD_NAMES.include?(data[:name])
 
         data.merge! runtimes(event)
         data.merge! extract_sql(data)

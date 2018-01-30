@@ -29,7 +29,7 @@ describe LogStasher::ActiveRecord::LogSubscriber do
   }
 
   describe '.process_action' do
-    let(:logger)  { double }
+    let(:logger)  { double(debug?: true) }
     let(:json)    { '{"sql":"SELECT * FROM nothing;","duration":0.0,"request_id":"1","source":"unknown","tags":["request"],"@timestamp":"1970-01-01T00:00:00.000Z","@version":"1"}'+"\n" }
     before do
       LogStasher.store.clear
@@ -39,6 +39,11 @@ describe LogStasher::ActiveRecord::LogSubscriber do
     end
     it 'calls all extractors and outputs the json' do
       expect(LogStasher.logger).to receive(:<<).with(json)
+      subject.identity(event)
+    end
+    it 'does not include sql when log level is > debug' do
+      allow(logger).to receive(:debug?).and_return(false)
+      expect(LogStasher.logger).to_not receive(:<<).with(json)
       subject.identity(event)
     end
   end
